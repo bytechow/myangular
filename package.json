@@ -1,0 +1,11 @@
+{
+  "name": "my-own-angularjs",
+  "version": "0.1.0",
+  "devDependencies": {
+    "grunt-contrib-jshint": "^1.1.0",
+    "grunt-contrib-testem": "^0.5.22"
+  },
+  "dependencies": {
+    "grunt": "^1.0.1"
+  }
+}
