@@ -914,7 +914,7 @@ describe('Scope', function() {
   // inheritance
   describe('inheritance', function() {
 
-    // 3-2
+    // 3-2 Making A Child Scope
     it("inherits the parent's properties", function() {
       var parent = new Scope();
       parent.aValue = [1, 2, 3];
@@ -998,7 +998,7 @@ describe('Scope', function() {
       expect(aaa.anotherValue).toBeUndefined();
     });
 
-    // 3-3
+    // 3-3 Attribute Shadowing
     it('shadows a parents property with the same name', function() {
 
       var parent = new Scope();
@@ -1022,57 +1022,72 @@ describe('Scope', function() {
       expect(parent.user.name).toBe('Jill');
     });
 
+    // 3-4 Separated Watches
+    it('does not digest its parent(s)', function() {
+      var parent = new Scope();
+      var child = parent.$new();
+
+      parent.aValue = 'abc';
+      parent.$watch(
+        function(scope) { return scope.aValue; },
+        function(newValue, oldValue, scope) {
+          scope.aValueWas = newValue;
+        }
+      );
+
+      child.$digest();
+      expect(child.aValueWas).toBeUndefined();
+    });
+
+    // 3-5 Recursive Digestion
+    it('keeps a record of its children', function() {
+      var parent = new Scope();
+      var child1 = parent.$new();
+      var child2 = parent.$new();
+      var child2_1 = child2.$new();
+
+      expect(parent.$$children.length).toBe(2);
+      expect(parent.$$children[0]).toBe(child1);
+      expect(parent.$$children[1]).toBe(child2);
+
+      expect(child1.$$children.length).toBe(0);
+
+      expect(child2.$$children.length).toBe(1);
+      expect(child2.$$children[0]).toBe(child2_1);
+    });
+    it('digests its children', function() {
+      var parent = new Scope();
+      var child = parent.$new();
+
+      parent.aValue = 'abc';
+      child.$watch(
+        function(scope) { return scope.aValue; },
+        function(newValue, oldValue, scope) {
+          scope.aValueWas = newValue;
+        }
+      );
+
+      parent.$digest();
+      expect(child.aValueWas).toBe('abc');
+    });
+
+    // 3-6 Digesting The Whole Tree from $apply, $evalAsync, and $applyAsync
+    it('digests from root on $apply', function() {
+      var parent = new Scope();
+      var child = parent.$new();
+      var child2 = child.$new();
+      parent.aValue = 'abc';
+      parent.counter = 0;
+      parent.$watch(
+        function(scope) { return scope.aValue; },
+        function(newValue, oldValue, scope) {
+          scope.counter++;
+        }
+      );
+      child2.$apply(function(scope) {});
+      expect(parent.counter).toBe(1);
+    });
+
   })
-
-  // 3-4
-  it('does not digest its parent(s)', function() {
-    var parent = new Scope();
-    var child = parent.$new();
-
-    parent.aValue = 'abc';
-    parent.$watch(
-      function(scope) { return scope.aValue; },
-      function(newValue, oldValue, scope) {
-        scope.aValueWas = newValue;
-      }
-    );
-
-    child.$digest();
-    expect(child.aValueWas).toBeUndefined();
-  });
-
-  // 3-5
-  it('keeps a record of its children', function() {
-    var parent = new Scope();
-    var child1 = parent.$new();
-    var child2 = parent.$new();
-    var child2_1 = child2.$new();
-
-    expect(parent.$$children.length).toBe(2);
-    expect(parent.$$children[0]).toBe(child1);
-    expect(parent.$$children[1]).toBe(child2);
-
-    expect(child1.$$children.length).toBe(0);
-
-    expect(child2.$$children.length).toBe(1);
-    expect(child2.$$children[0]).toBe(child2_1);
-  });
-
-  // 3-6
-  it('digests its children', function() {
-    var parent = new Scope();
-    var child = parent.$new();
-
-    parent.aValue = 'abc';
-    child.$watch(
-      function(scope) { return scope.aValue; },
-      function(newValue, oldValue, scope) {
-        scope.aValueWas = newValue;
-      }
-    );
-
-    parent.$digest();
-    expect(child.aValueWas).toBe('abc');
-  });
 
 });
